@@ -1,0 +1,137 @@
+# AWS EC2 Deployment Guide: Setting Up a React Frontend with Nginx
+
+ 1. Connecting to AWS EC2 Instance
+Ensure you have the correct permissions for the private key file before connecting to the EC2 instance.
+
+ Fixing Private Key Permissions
+powershell
+icacls "C:\CS_WI_6905_Group_03.pem" /inheritance:r
+icacls "C:\CS_WI_6905_Group_03.pem" /grant:r "DESKTOP-N8C0280\Anup Shastri:R"
+icacls "C:\CS_WI_6905_Group_03.pem" /remove "BUILTIN\Users"
+icacls "C:\CS_WI_6905_Group_03.pem" /remove "Everyone"
+
+
+ Connecting to EC2 Instance
+
+ssh -i C:\CS_WI_6905_Group_03.pem ubuntu@3.136.84.85
+
+
+ 2. Updating the System
+
+sudo apt update && sudo apt upgrade -y
+
+
+ 3. Installing Node.js and NPM
+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+Verify installation:
+
+node -v
+npm -v
+
+
+ 4. Installing Git
+
+sudo apt install -y git
+
+Verify installation:
+
+git --version
+
+
+ 5. Installing Unzip
+
+sudo apt install -y unzip
+
+Verify installation:
+
+unzip -v
+
+
+ 6. Installing and Configuring Nginx
+
+sudo apt install -y nginx
+
+Enable and start Nginx:
+
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+Verify Nginx is running:
+
+systemctl status nginx
+
+Test Nginx:
+
+curl -I http://localhost
+
+
+ 7. Installing PM2
+
+sudo npm install -g pm2
+
+Verify installation:
+
+pm2 --version
+
+
+ 8. Installing AWS CLI
+
+sudo apt install -y awscli
+
+Verify installation:
+
+aws --version
+
+
+ 9. Deploying React Frontend
+ Uploading and Extracting React Build
+
+unzip build.zip -d frontend
+sudo mv frontend/build /var/www/html/
+
+ Setting Permissions
+
+sudo chown -R www-data:www-data /var/www/html/build
+sudo chmod -R 755 /var/www/html/build
+
+
+ 10. Configuring Nginx for React
+ Create a New Nginx Configuration File
+
+sudo nano /etc/nginx/sites-available/react
+
+Paste the following configuration:
+nginx
+server {
+    listen 80;
+    server_name your_domain_or_IP;
+    root /var/www/html/build;
+    index index.html;
+
+    location / {
+        try_files $uri /index.html;
+    }
+}
+
+ Enable the Configuration
+
+sudo ln -s /etc/nginx/sites-available/react /etc/nginx/sites-enabled/
+
+ Restart Nginx
+
+sudo systemctl restart nginx
+
+
+ 11. Final Verification
+Visit `http://your_domain_or_IP` in a browser to check if the deployment is successful.
+
+ 12. Additional Notes
+- Ensure security groups allow HTTP (port 80) access.
+- Use `pm2` for managing background Node.js applications if needed.
+- Use `aws s3 sync` if files are stored in S3.
+
+This document serves as a step-by-step guide for deploying a React frontend on an AWS EC2 instance using Nginx. 🚀
+
