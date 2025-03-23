@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { CloudUploadIcon, ClipboardListIcon, CalendarIcon, UserCircleIcon, LogoutIcon } from "@heroicons/react/outline";
 
+const API_BASE_URL = "http://localhost:5000"; // Update with actual EC2 IP
+
 const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [records, setRecords] = useState([]);
@@ -14,21 +16,67 @@ const Dashboard = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:5000/user")
-      .then(response => setUserData(response.data))
-      .catch(error => console.error("Error fetching user data:", error));
+    const fetchData = async () => {
+      try {
+        // Fetch User Data
+        const userResponse = await axios.get(`${API_BASE_URL}/user`);
+        setUserData(userResponse.data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setUserData({
+          name: "John Doe",
+          id: "12345",
+          age: 30,
+          bloodType: "O+",
+          weight: "75kg",
+        });
+      }
 
-    axios.get("http://localhost:5000/records")
-      .then(response => setRecords(response.data))
-      .catch(error => console.error("Error fetching records:", error));
+      try {
+        // Fetch Medical Records
+        const recordsResponse = await axios.get(`${API_BASE_URL}/records`);
+        setRecords(recordsResponse.data.length ? recordsResponse.data : [
+          { name: "General Checkup", date: "Jan 15, 2025" },
+          { name: "Blood Test", date: "Feb 10, 2025" }
+        ]);
+      } catch (error) {
+        console.error("Error fetching records:", error);
+        setRecords([
+          { name: "General Checkup", date: "Jan 15, 2025" },
+          { name: "Blood Test", date: "Feb 10, 2025" }
+        ]);
+      }
 
-    axios.get("http://localhost:5000/prescriptions")
-      .then(response => setPrescriptions(response.data))
-      .catch(error => console.error("Error fetching prescriptions:", error));
+      try {
+        // Fetch Prescriptions
+        const prescriptionsResponse = await axios.get(`${API_BASE_URL}/prescriptions`);
+        setPrescriptions(prescriptionsResponse.data.length ? prescriptionsResponse.data : [
+          { name: "Paracetamol", dosage: "Twice daily" },
+          { name: "Ibuprofen", dosage: "As needed" }
+        ]);
+      } catch (error) {
+        console.error("Error fetching prescriptions:", error);
+        setPrescriptions([
+          { name: "Paracetamol", dosage: "Twice daily" },
+          { name: "Ibuprofen", dosage: "As needed" }
+        ]);
+      }
 
-    axios.get("http://localhost:5000/appointments")
-      .then(response => setAppointments(response.data))
-      .catch(error => console.error("Error fetching appointments:", error));
+      try {
+        // Fetch Appointments
+        const appointmentsResponse = await axios.get(`${API_BASE_URL}/appointments`);
+        setAppointments(appointmentsResponse.data.length ? appointmentsResponse.data : [
+          { doctor: "Dr. Sarah Smith", date: "Mar 5, 2025" }
+        ]);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+        setAppointments([
+          { doctor: "Dr. Sarah Smith", date: "Mar 5, 2025" }
+        ]);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleFileChange = (event) => {
@@ -49,7 +97,7 @@ const Dashboard = () => {
     formData.append("xray", file);
 
     try {
-      const response = await axios.post("http://localhost:5000/upload-xray", formData, {
+      const response = await axios.post(`${API_BASE_URL}/upload-xray`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -67,7 +115,9 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     alert("Logged out successfully!");
-    // Add actual logout logic here
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
   };
 
   return (
@@ -126,25 +176,17 @@ const Dashboard = () => {
           {/* Recent Records */}
           <div className="bg-white p-4 rounded-lg shadow">
             <h3 className="text-lg font-semibold">Recent Records</h3>
-            {records.length ? (
-              records.map((record, index) => (
-                <p key={index} className="mt-2">{record.name} - {record.date}</p>
-              ))
-            ) : (
-              <p className="text-gray-500 mt-2">No recent records</p>
-            )}
+            {records.map((record, index) => (
+              <p key={index} className="mt-2">{record.name} - {record.date}</p>
+            ))}
           </div>
 
           {/* Active Prescriptions */}
           <div className="bg-white p-4 rounded-lg shadow">
             <h3 className="text-lg font-semibold">Active Prescriptions</h3>
-            {prescriptions.length ? (
-              prescriptions.map((prescription, index) => (
-                <p key={index} className="mt-2">{prescription.name} - {prescription.dosage}</p>
-              ))
-            ) : (
-              <p className="text-gray-500 mt-2">No active prescriptions</p>
-            )}
+            {prescriptions.map((prescription, index) => (
+              <p key={index} className="mt-2">{prescription.name} - {prescription.dosage}</p>
+            ))}
           </div>
         </div>
 
@@ -159,24 +201,8 @@ const Dashboard = () => {
               Upload X-Ray
             </button>
           </div>
-
-          {/* Display Analysis Results */}
-          {loading && <p className="text-gray-500 mt-4">Analyzing X-Ray...</p>}
-          {error && <p className="text-red-500 mt-4">{error}</p>}
-          {xrayAnalysis && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg shadow-inner">
-              <h4 className="text-lg font-semibold">Analysis Result</h4>
-              <p><strong>Condition:</strong> {xrayAnalysis.condition}</p>
-              <p><strong>Accuracy:</strong> {xrayAnalysis.accuracy}%</p>
-            </div>
-          )}
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white p-4 mt-6 text-center">
-        <p>© 2025 MedPortal. All rights reserved.</p>
-      </footer>
     </div>
   );
 };
