@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { CloudUploadIcon, ClipboardListIcon, CalendarIcon } from "@heroicons/react/outline";
+import { CloudUploadIcon, ClipboardListIcon, CalendarIcon, UserCircleIcon, LogoutIcon } from "@heroicons/react/outline";
 
 const Dashboard = () => {
   const [userData, setUserData] = useState(null);
@@ -8,21 +8,25 @@ const Dashboard = () => {
   const [prescriptions, setPrescriptions] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [file, setFile] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [xrayAnalysis, setXrayAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    axios.get("https://api.yourapp.com/user")
+    axios.get("http://localhost:5000/user")
       .then(response => setUserData(response.data))
       .catch(error => console.error("Error fetching user data:", error));
 
-    axios.get("https://api.yourapp.com/records")
+    axios.get("http://localhost:5000/records")
       .then(response => setRecords(response.data))
       .catch(error => console.error("Error fetching records:", error));
 
-    axios.get("https://api.yourapp.com/prescriptions")
+    axios.get("http://localhost:5000/prescriptions")
       .then(response => setPrescriptions(response.data))
       .catch(error => console.error("Error fetching prescriptions:", error));
 
-    axios.get("https://api.yourapp.com/appointments")
+    axios.get("http://localhost:5000/appointments")
       .then(response => setAppointments(response.data))
       .catch(error => console.error("Error fetching appointments:", error));
   }, []);
@@ -36,92 +40,143 @@ const Dashboard = () => {
       alert("Please select a file first.");
       return;
     }
+
+    setLoading(true);
+    setError("");
+    setXrayAnalysis(null);
+
     const formData = new FormData();
     formData.append("xray", file);
 
     try {
-      await axios.post("https://api.yourapp.com/upload-xray", formData, {
+      const response = await axios.post("http://localhost:5000/upload-xray", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       alert("X-Ray uploaded successfully!");
+
+      // Assuming the backend returns analysis results
+      setXrayAnalysis(response.data);
     } catch (error) {
       console.error("Error uploading X-Ray:", error);
+      setError("Failed to upload and analyze the X-ray.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleLogout = () => {
+    alert("Logged out successfully!");
+    // Add actual logout logic here
+  };
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-800">Medical Dashboard</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        {/* User Profile */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          {userData && (
-            <>
-              <h3 className="text-xl font-semibold">{userData.name}</h3>
-              <p className="text-gray-600">ID: {userData.id}</p>
-              <p className="mt-2"><strong>Age:</strong> {userData.age}</p>
-              <p><strong>Blood Type:</strong> {userData.bloodType}</p>
-              <p><strong>Weight:</strong> {userData.weight} kg</p>
-            </>
-          )}
+    <div className="min-h-screen bg-gray-100">
+      {/* Navbar */}
+      <nav className="bg-blue-600 p-4 flex justify-between items-center shadow-md">
+        <div className="text-white text-2xl font-bold">
+          <img src="/logo.png" alt="MedPortal" className="h-10 inline-block mr-2" />
+          MedPortal
         </div>
 
-        {/* Recent Records */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold">Recent Records</h3>
-          {records.length ? (
-            records.map((record, index) => (
-              <p key={index} className="mt-2">{record.name} - {record.date}</p>
-            ))
-          ) : (
-            <p className="text-gray-500 mt-2">No recent records</p>
-          )}
-        </div>
-
-        {/* Active Prescriptions */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold">Active Prescriptions</h3>
-          {prescriptions.length ? (
-            prescriptions.map((prescription, index) => (
-              <p key={index} className="mt-2">{prescription.name} - {prescription.dosage}</p>
-            ))
-          ) : (
-            <p className="text-gray-500 mt-2">No active prescriptions</p>
-          )}
-        </div>
-      </div>
-
-      {/* X-Ray Upload */}
-      <div className="bg-white p-6 rounded-lg shadow mt-6">
-        <h3 className="text-lg font-semibold">X-Ray Analysis</h3>
-        <div className="border-dashed border-2 border-gray-300 p-6 text-center mt-4">
-          <CloudUploadIcon className="w-10 h-10 mx-auto text-gray-500" />
-          <p className="text-gray-500 mt-2">Drop your chest X-Ray here or click to upload</p>
-          <input type="file" onChange={handleFileChange} className="mt-4 border p-2 rounded" />
-          <button onClick={handleUpload} className="mt-4 bg-blue-600 text-white py-2 px-4 rounded">
-            Upload X-Ray
+        <div className="relative">
+          <button 
+            className="flex items-center text-white text-lg focus:outline-none"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          >
+            <UserCircleIcon className="h-8 w-8 mr-2" />
+            {userData ? userData.name : "Guest"}
           </button>
+
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-md">
+              <button className="block w-full text-left px-4 py-2 hover:bg-gray-100">
+                Profile
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+              >
+                <LogoutIcon className="h-5 w-5 inline-block mr-2" />
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="p-6">
+        <h2 className="text-3xl font-bold text-gray-800">Medical Dashboard</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          {/* User Profile */}
+          <div className="bg-white p-4 rounded-lg shadow">
+            {userData && (
+              <>
+                <h3 className="text-xl font-semibold">{userData.name}</h3>
+                <p className="text-gray-600">ID: {userData.id}</p>
+                <p className="mt-2"><strong>Age:</strong> {userData.age}</p>
+                <p><strong>Blood Type:</strong> {userData.bloodType}</p>
+                <p><strong>Weight:</strong> {userData.weight} kg</p>
+              </>
+            )}
+          </div>
+
+          {/* Recent Records */}
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h3 className="text-lg font-semibold">Recent Records</h3>
+            {records.length ? (
+              records.map((record, index) => (
+                <p key={index} className="mt-2">{record.name} - {record.date}</p>
+              ))
+            ) : (
+              <p className="text-gray-500 mt-2">No recent records</p>
+            )}
+          </div>
+
+          {/* Active Prescriptions */}
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h3 className="text-lg font-semibold">Active Prescriptions</h3>
+            {prescriptions.length ? (
+              prescriptions.map((prescription, index) => (
+                <p key={index} className="mt-2">{prescription.name} - {prescription.dosage}</p>
+              ))
+            ) : (
+              <p className="text-gray-500 mt-2">No active prescriptions</p>
+            )}
+          </div>
+        </div>
+
+        {/* X-Ray Upload & Analysis */}
+        <div className="bg-white p-6 rounded-lg shadow mt-6">
+          <h3 className="text-lg font-semibold">X-Ray Analysis</h3>
+          <div className="border-dashed border-2 border-gray-300 p-6 text-center mt-4">
+            <CloudUploadIcon className="w-10 h-10 mx-auto text-gray-500" />
+            <p className="text-gray-500 mt-2">Drop your chest X-Ray here or click to upload</p>
+            <input type="file" onChange={handleFileChange} className="mt-4 border p-2 rounded" />
+            <button onClick={handleUpload} className="mt-4 bg-blue-600 text-white py-2 px-4 rounded">
+              Upload X-Ray
+            </button>
+          </div>
+
+          {/* Display Analysis Results */}
+          {loading && <p className="text-gray-500 mt-4">Analyzing X-Ray...</p>}
+          {error && <p className="text-red-500 mt-4">{error}</p>}
+          {xrayAnalysis && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg shadow-inner">
+              <h4 className="text-lg font-semibold">Analysis Result</h4>
+              <p><strong>Condition:</strong> {xrayAnalysis.condition}</p>
+              <p><strong>Accuracy:</strong> {xrayAnalysis.accuracy}%</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Upcoming Appointments */}
-      <div className="bg-white p-6 rounded-lg shadow mt-6">
-        <h3 className="text-lg font-semibold">Upcoming Appointments</h3>
-        {appointments.length ? (
-          appointments.map((appointment, index) => (
-            <div key={index} className="mt-4 flex items-center">
-              <CalendarIcon className="w-6 h-6 text-gray-500 mr-2" />
-              <p>{appointment.doctor} - {appointment.date}</p>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 mt-2">No upcoming appointments</p>
-        )}
-        <button className="mt-4 bg-black text-white py-2 px-4 rounded">
-          Schedule New Appointment
-        </button>
-      </div>
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white p-4 mt-6 text-center">
+        <p>© 2025 MedPortal. All rights reserved.</p>
+      </footer>
     </div>
   );
 };
