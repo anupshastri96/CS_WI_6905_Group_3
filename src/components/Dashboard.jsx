@@ -201,8 +201,24 @@ const Dashboard = () => {
               Upload X-Ray
             </button>
           </div>
+
+          {/* Display Analysis Results */}
+          {loading && <p className="text-gray-500 mt-4">Analyzing X-Ray...</p>}
+          {error && <p className="text-red-500 mt-4">{error}</p>}
+          {xrayAnalysis && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg shadow-inner">
+              <h4 className="text-lg font-semibold">Analysis Result</h4>
+              <p><strong>Condition:</strong> {xrayAnalysis.condition}</p>
+              <p><strong>Accuracy:</strong> {xrayAnalysis.accuracy}%</p>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white p-4 mt-6 text-center">
+        <p>© 2025 MedPortal. All rights reserved.</p>
+      </footer>
     </div>
   );
 };
