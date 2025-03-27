@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { CloudUploadIcon, ClipboardListIcon, CalendarIcon, UserCircleIcon, LogoutIcon } from "@heroicons/react/outline";
+import { useAuth } from "react-oidc-context";
 
 const API_BASE_URL = "http://localhost:5000"; // Update with actual EC2 IP
 
@@ -14,6 +15,7 @@ const Dashboard = () => {
   const [xrayAnalysis, setXrayAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const auth = useAuth(); // 🔹 Get authentication state
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,7 +26,7 @@ const Dashboard = () => {
       } catch (error) {
         console.error("Error fetching user data:", error);
         setUserData({
-          name: "John Doe",
+          name: auth.user?.profile.email || "John Doe",
           id: "12345",
           age: 30,
           bloodType: "O+",
@@ -113,11 +115,16 @@ const Dashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    alert("Logged out successfully!");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
+  // 🔴 Logout Function that Clears Session and Redirects
+  const handleLogout = async () => {
+    const clientId = "7rfb69gglntu7klpdq77i9asau";
+    const logoutUri = "http://localhost:3000/"; // Change to production domain if needed
+    const cognitoDomain = "https://us-east-24tftlwzgp.auth.us-east-2.amazoncognito.com";
+    //Clear Local Storage & Session Storage
+    localStorage.clear();
+    sessionStorage.clear();
+    await auth.removeUser(); // Clears authentication session
+    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
   };
 
   return (
