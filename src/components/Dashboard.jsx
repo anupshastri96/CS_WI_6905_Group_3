@@ -36,9 +36,10 @@ const Dashboard = () => {
         setUserData(userResponse.data);
       } catch (error) {
         console.error("Error fetching user data:", error);
+        console.log(auth.user?.profile);
         setUserData({
-          name: auth.user?.profile.email || "John Doe",
-          id: "12345",
+          name: auth.user?.profile["cognito:username"] || "Dummy User",
+          id: auth.user?.profile.sub ||"12345",
           age: 30,
           bloodType: "O+",
           weight: "75kg",
