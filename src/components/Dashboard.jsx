@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { CloudUploadIcon, ClipboardListIcon, CalendarIcon, UserCircleIcon, LogoutIcon } from "@heroicons/react/outline";
 import { useAuth } from "react-oidc-context";
+import { useNavigate } from "react-router-dom"; 
 
 const API_BASE_URL = "http://localhost:5000"; // Update with actual EC2 IP
 
@@ -15,10 +16,20 @@ const Dashboard = () => {
   const [xrayAnalysis, setXrayAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const auth = useAuth(); // 🔹 Get authentication state
+  const auth = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (!auth.isAuthenticated && !auth.isLoading) {
+      navigate("/"); // Redirect to login if not authenticated
+    } else if (auth.isAuthenticated) {
+      navigate("/dashboard");
+      fetchData();
+    }
+  }, [auth.isAuthenticated]); // ✅ Fetches data only once
+  
+  
+  const fetchData = async () => {
       try {
         // Fetch User Data
         const userResponse = await axios.get(`${API_BASE_URL}/user`);
@@ -76,10 +87,7 @@ const Dashboard = () => {
           { doctor: "Dr. Sarah Smith", date: "Mar 5, 2025" }
         ]);
       }
-    };
-
-    fetchData();
-  }, []);
+  };
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);

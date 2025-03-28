@@ -1,44 +1,59 @@
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
 import Dashboard from "./components/Dashboard";
+
+// Custom Callback component to handle the redirect response.
+const Callback = () => {
+  const auth = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Once authentication is complete, redirect to dashboard.
+    if (!auth.isLoading && auth.isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [auth, navigate]);
+
+  return <div>Processing login...</div>;
+};
 
 function App() {
   const auth = useAuth();
 
-  const signOutRedirect = () => {
-    const clientId = "7rfb69gglntu7klpdq77i9asau";
-    const logoutUri = "http://localhost:3000/";
-    const cognitoDomain = "https://us-east-24tftlwzgp.auth.us-east-2.amazoncognito.com";
-    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
-  };
-
-  // **Show loading screen until authentication state is checked**
-  if (auth.isLoading) {
-    return <div className="flex items-center justify-center min-h-screen text-xl">Loading authentication...</div>;
-  }
-
-  // **If authentication fails, show error message**
-  if (auth.error) {
-    return <div className="text-center mt-10 text-red-500">Error: {auth.error.message}</div>;
-  }
-
-  // **If user is NOT authenticated, redirect them to AWS Cognito login page**
-  if (!auth.isAuthenticated) {
-    auth.signinRedirect(); // 🚀 This ensures the AWS login page is opened
-    return (
-      <div className="flex items-center justify-center min-h-screen text-xl">
-        Redirecting to AWS Cognito...
-      </div>
-    );
-  }
-
-  // **Once authenticated, load the Dashboard**
   return (
-    <div className="bg-gray-200 min-h-screen">
-      <Dashboard user={auth.user} />
-      <button onClick={signOutRedirect} className="bg-red-500 text-white px-4 py-2 rounded mt-4">
-        Sign Out
-      </button>
-    </div>
+    <Routes>
+      {/* Callback Route: Processes the authentication response */}
+      <Route path="/auth/callback" element={<Callback />} />
+
+      {/* Login Page */}
+      <Route
+        path="/"
+        element={
+          auth.isLoading ? (
+            <div>Loading...</div>
+          ) : !auth.isAuthenticated ? (
+            <div className="min-h-screen flex flex-col justify-center items-center bg-gray-200">
+              <h1 className="text-3xl font-bold">Welcome to MedPortal</h1>
+              <button
+                onClick={() => auth.signinRedirect()}
+                className="mt-4 bg-blue-600 text-white py-2 px-4 rounded"
+              >
+                Sign in with AWS Cognito
+              </button>
+            </div>
+          ) : (
+            <Navigate to="/dashboard" replace />
+          )
+        }
+      />
+
+      {/* Dashboard Page */}
+      <Route
+        path="/dashboard"
+        element={auth.isAuthenticated ? <Dashboard /> : <Navigate to="/" replace />}
+      />
+    </Routes>
   );
 }
 
