@@ -95,8 +95,7 @@ const Dashboard = () => {
   
     try {
       //Upload X-ray to AI API for Prediction
-      const response = await axios.post(
-        "http://medportal-lb-1742379571.us-east-2.elb.amazonaws.com:8000/classifier/predict",
+      const response = await axios.post(`${API_BASE_URL}/classifier/predict`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
