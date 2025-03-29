@@ -1,5 +1,8 @@
 # AWS EC2 Deployment Guide: Setting Up a React Frontend with Nginx
 
+scp -i C:\CS_WI_6905_Group_03.pem "C:\Users\Anup Shastri\OneDrive\Documents\Winter_2025\Cloud\ProjectCode\CS_WI_6905_Group_3\build.zip" ubuntu@52.14.177.241:/home/ubuntu/
+
+
  1. Connecting to AWS EC2 Instance
 Ensure you have the correct permissions for the private key file before connecting to the EC2 instance.
 
@@ -13,7 +16,7 @@ icacls "C:\CS_WI_6905_Group_03.pem" /remove "Everyone"
 
  Connecting to EC2 Instance
 
-ssh -i C:\CS_WI_6905_Group_03.pem ubuntu@3.136.84.85
+ssh -i C:\CS_WI_6905_Group_03.pem ubuntu@52.14.177.241
 
 
  2. Updating the System
